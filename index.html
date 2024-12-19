@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Calculator</title>
+    <style>
+        /* General Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        body.light {
+            background: #f4f4f4;
+            color: #333;
+        }
+
+        body.dark {
+            background: #1c1c1c;
+            color: #fff;
+        }
+
+        .calculator {
+            width: 360px;
+            background: var(--calculator-bg, #ffffff);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            padding: 20px;
+            transition: background-color 0.3s ease;
+        }
+
+        body.light .calculator {
+            --calculator-bg: #ffffff;
+        }
+
+        body.dark .calculator {
+            --calculator-bg: #2a2a2a;
+        }
+
+        .display {
+            background: var(--display-bg, #f4f4f4);
+            padding: 20px;
+            font-size: 1.5rem;
+            text-align: right;
+            border-radius: 8px;
+            color: var(--display-text, #333);
+            margin-bottom: 15px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        body.light .display {
+            --display-bg: #f9f9f9;
+            --display-text: #333;
+        }
+
+        body.dark .display {
+            --display-bg: #1c1c1c;
+            --display-text: #00bcd4;
+        }
+
+        .keys {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-gap: 10px;
+        }
+
+        .keys button {
+            background: var(--button-bg, #eaeaea);
+            border: none;
+            padding: 15px;
+            font-size: 1.2rem;
+            border-radius: 8px;
+            color: var(--button-text, #333);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        body.light .keys button {
+            --button-bg: #eaeaea;
+            --button-text: #333;
+        }
+
+        body.dark .keys button {
+            --button-bg: #333;
+            --button-text: #fff;
+        }
+
+        .keys button:hover {
+            background: var(--button-hover-bg, #d8d8d8);
+        }
+
+        body.light .keys button:hover {
+            --button-hover-bg: #d8d8d8;
+        }
+
+        body.dark .keys button:hover {
+            --button-hover-bg: #444;
+        }
+
+        .keys button.operator {
+            background: #00bcd4;
+            color: #fff;
+        }
+
+        .keys button.operator:hover {
+            background: #00a2b6;
+        }
+
+        .keys button.equal {
+            background: #ff5722;
+            color: #fff;
+            grid-column: span 2;
+        }
+
+        .keys button.equal:hover {
+            background: #e64a19;
+        }
+
+        .keys button.clear {
+            background: #d32f2f;
+            color: #fff;
+            grid-column: span 2;
+        }
+
+        .keys button.clear:hover {
+            background: #b71c1c;
+        }
+
+        .theme-switch {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            cursor: pointer;
+        }
+
+        .toggle {
+            width: 50px;
+            height: 25px;
+            background: #ddd;
+            border-radius: 25px;
+            position: relative;
+            transition: background 0.3s ease;
+        }
+
+        .toggle:before {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+        }
+
+        body.dark .toggle {
+            background: #333;
+        }
+
+        body.dark .toggle:before {
+            transform: translateX(25px);
+        }
+    </style>
+</head>
+
+<body class="light">
+    <div class="theme-switch" id="theme-switch">
+        <div class="toggle"></div>
+        <span id="theme-label">Light</span>
+    </div>
+    <div class="calculator">
+        <div class="display" id="display">0</div>
+        <div class="keys">
+            <button class="clear">C</button>
+            <button>(</button>
+            <button>)</button>
+            <button class="operator">÷</button>
+            <button>7</button>
+            <button>8</button>
+            <button>9</button>
+            <button class="operator">×</button>
+            <button>4</button>
+            <button>5</button>
+            <button>6</button>
+            <button class="operator">−</button>
+            <button>1</button>
+            <button>2</button>
+            <button>3</button>
+            <button class="operator">+</button>
+            <button>0</button>
+            <button>.</button>
+            <button class="equal">=</button>
+        </div>
+    </div>
+
+    <script>
+        const display = document.getElementById('display');
+        const buttons = document.querySelectorAll('.keys button');
+        const themeSwitch = document.getElementById('theme-switch');
+        const themeLabel = document.getElementById('theme-label');
+        const body = document.body;
+
+        let fullExpression = '';
+
+        // Update display dynamically
+        const updateDisplay = () => {
+            display.textContent = fullExpression || '0';
+        };
+
+        // Handle button clicks
+        buttons.forEach(button => {
+            button.addEventListener('click', () => {
+                const value = button.textContent;
+
+                if (button.classList.contains('clear')) {
+                    fullExpression = '';
+                } else if (button.classList.contains('equal')) {
+                    try {
+                        const sanitizedExpression = fullExpression
+                            .replace(/÷/g, '/')
+                            .replace(/×/g, '*')
+                            .replace(/−/g, '-')
+                            .replace(/([0-9])\(/g, '$1*('); // Handle implicit multiplication like 3(53)
+
+                        const result = eval(sanitizedExpression);
+                        fullExpression = result.toString();
+                    } catch (error) {
+                        fullExpression = 'Error';
+                    }
+                } else {
+                    fullExpression += value;
+                }
+                updateDisplay();
+            });
+        });
+
+        // Handle keyboard input
+        document.addEventListener('keydown', (event) => {
+            const allowedKeys = '0123456789+-*/().=EnterBackspace';
+            const key = event.key;
+
+            if (!allowedKeys.includes(key)) return;
+
+            if (key === 'Enter' || key === '=') {
+                try {
+                    const sanitizedExpression = fullExpression
+                        .replace(/÷/g, '/')
+                        .replace(/×/g, '*')
+                        .replace(/−/g, '-')
+                        .replace(/([0-9])\(/g, '$1*(');
+
+                    const result = eval(sanitizedExpression);
+                    fullExpression = result.toString();
+                } catch (error) {
+                    fullExpression = 'Error';
+                }
+            } else if (key === 'Backspace') {
+                fullExpression = fullExpression.slice(0, -1);
+            } else {
+                fullExpression += key.replace('*', '×').replace('/', '÷');
+            }
+            updateDisplay();
+        });
+
+        // Handle theme switching
+        themeSwitch.addEventListener('click', () => {
+            body.classList.toggle('light');
+            body.classList.toggle('dark');
+            themeLabel.textContent = body.classList.contains('light') ? 'Light' : 'Dark';
+        });
+    </script>
+</body>
+
+</html>
